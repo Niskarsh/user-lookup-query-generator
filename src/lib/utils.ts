@@ -25,8 +25,20 @@ export function buildSqlQuery(emails: string[]): string {
 
   // Final SQL
   return `
-SELECT *
-FROM public."user"
-WHERE email ILIKE ANY(${arrayLiteral});
+SELECT
+  u.*,
+  COALESCE(array_agg(s.name) FILTER (WHERE s.name IS NOT NULL), '{}') AS pos_skills
+FROM public."user" u
+JOIN entity e
+  ON e.user_id = u.id
+LEFT JOIN proof_of_skill pos
+  ON pos.user_id  = u.id
+LEFT JOIN skills s
+  ON s.id         = pos.skill_id
+WHERE u.email ILIKE ANY(${arrayLiteral})
+and e.deleted_at IS NULL
+and s.deleted_at is null
+GROUP BY u.id
+;
   `.trim();
 }
