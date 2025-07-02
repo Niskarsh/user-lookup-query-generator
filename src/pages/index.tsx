@@ -46,11 +46,15 @@ export default function Home() {
             body: JSON.stringify({ emails }),
           });
           const data = (await resp.json()) as ApiResponse;
-          if (!resp.ok) throw new Error((data as any).error || "Error");
+          if (!resp.ok) throw new Error((data as ApiResponse & { error?: string }).error || "Error");
           setSql(data.query);
           setCount(data.count);
-        } catch (e: any) {
-          setError(e.message);
+        } catch (e: unknown) {
+          if (e instanceof Error) {
+            setError(e.message);
+          } else {
+            setError("An unknown error occurred.");
+          }
         } finally {
           setLoading(false);
         }
